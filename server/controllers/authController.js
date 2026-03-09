@@ -13,17 +13,33 @@ const register = async (req, res) => {
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      return res.status(400).json({ message: errors.array()[0].msg });
+      // Return ALL errors for debugging
+      return res.status(400).json({ 
+        message: errors.array()[0].msg,
+        errors: errors.array()
+      });
     }
 
     const { name, email, password } = req.body;
+    
+    // Log what we received
+    console.log('Register attempt:', { name, email, passwordLength: password?.length });
+
+    if (!name || name.trim().length < 2) {
+      return res.status(400).json({ message: 'Name must be at least 2 characters' });
+    }
 
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({ message: 'Email already registered' });
     }
 
-    const user = await User.create({ name, email, password });
+    const user = await User.create({ 
+      name: name.trim(), 
+      email, 
+      password 
+    });
+    
     const token = generateToken(user._id);
 
     res.status(201).json({
@@ -37,6 +53,7 @@ const register = async (req, res) => {
       },
     });
   } catch (error) {
+    console.error('Register error:', error);
     res.status(500).json({ message: 'Registration failed', error: error.message });
   }
 };
