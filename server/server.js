@@ -7,15 +7,11 @@ dotenv.config();
 
 const app = express();
 
+// Allow all origins (safe for now, can restrict later)
 app.use(cors({
-  origin: function (origin, callback) {
-    if (!origin || origin.endsWith('.vercel.app') || origin === process.env.CLIENT_URL) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-  credentials: true,
+  origin: '*',
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 
 app.use(express.json({ limit: '10mb' }));
@@ -44,4 +40,5 @@ mongoose.connect(process.env.MONGODB_URI)
     console.error('❌ MongoDB connection error:', err.message);
     process.exit(1);
   });
+
 module.exports = app;
