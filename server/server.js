@@ -7,14 +7,9 @@ dotenv.config();
 
 const app = express();
 
-// Middleware
 app.use(cors({
   origin: function (origin, callback) {
-    const allowed = [
-      process.env.CLIENT_URL,
-      'http://localhost:5173',
-    ];
-    if (!origin || allowed.includes(origin) || origin.endsWith('.vercel.app')) {
+    if (!origin || origin.endsWith('.vercel.app') || origin === process.env.CLIENT_URL) {
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));
@@ -23,24 +18,23 @@ app.use(cors({
   credentials: true,
 }));
 
-// Routes
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true }));
+
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/resume', require('./routes/resume'));
 app.use('/api/ai', require('./routes/ai'));
 
-// Health check
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', message: 'SmartResume API is running' });
 });
 
-// Error handler
 app.use((err, req, res, next) => {
   console.error(err.stack);
-  res.status(500).json({ message: 'Internal server error', error: err.message });
+  res.status(500).json({ message: 'Internal server error' });
 });
 
-// Connect to MongoDB
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/smartresume')
+mongoose.connect(process.env.MONGODB_URI)
   .then(() => {
     console.log('✅ MongoDB connected');
     const PORT = process.env.PORT || 5000;
@@ -50,5 +44,4 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/smartresu
     console.error('❌ MongoDB connection error:', err.message);
     process.exit(1);
   });
-
 module.exports = app;
